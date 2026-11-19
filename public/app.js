@@ -5,6 +5,10 @@ const doctors = [
   { id: 'abuzar', name: 'Dr. Abu Zar', image: 'images/dr_abuzar.webp', booking: 'queue', schedule: 'Monday & Wednesday', hours: '11:00 am – 2:00 pm', closed: [0, 2, 3, 4, 5, 6], note: 'First-come, first-served queue' },
 ];
 
+// Paste the deployed Google Apps Script Web App URL here (must end in /exec).
+// Leave blank until the hospital owner has completed the setup in apps-script/README.md.
+const BOOKING_ENDPOINT = '';
+
 const grid = document.querySelector('#doctor-grid');
 const dialog = document.querySelector('#booking-dialog');
 const content = document.querySelector('#booking-content');
@@ -81,12 +85,12 @@ function bookingForm() {
 }
 function patientForm() {
   const p = state.person;
-  return `<div class="form-grid"><div class="field-group"><label class="form-label" for="patient-name">Full name</label><input class="field" id="patient-name" name="name" autocomplete="name" placeholder="Your full name" value="${escapeHtml(p.name)}" required></div><div class="field-group"><label class="form-label" for="patient-phone">Phone number</label><input class="field" id="patient-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="03XX XXXXXXX" value="${escapeHtml(p.phone)}" required></div><div class="field-group"><label class="form-label" for="patient-age">Age</label><input class="field" id="patient-age" name="age" type="number" min="0" max="120" placeholder="Age in years" value="${escapeHtml(p.age)}" required></div><div class="field-group"><label class="form-label" for="patient-gender">Gender</label><select class="field" id="patient-gender" name="gender" required><option value="">Choose</option>${['Female', 'Male', 'Prefer not to say'].map((v) => `<option ${p.gender === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div></div><div class="field-group"><label class="form-label" for="patient-reason">Reason for visit</label><textarea class="field" id="patient-reason" name="reason" rows="3" maxlength="220" placeholder="Briefly tell us what you need help with" style="height:auto;min-height:74px;padding:10px 11px;resize:vertical" required>${escapeHtml(p.reason)}</textarea></div><p class="form-footnote">Only the basic details needed for this request. This front-end demo does not send or save your information.</p><div class="booking-error" aria-live="polite"></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-back>Back</button><button class="button button-primary" type="button" data-next>Review request <span>→</span></button></div>`;
+  return `<div class="form-grid"><div class="field-group"><label class="form-label" for="patient-name">Full name</label><input class="field" id="patient-name" name="name" autocomplete="name" placeholder="Your full name" value="${escapeHtml(p.name)}" required></div><div class="field-group"><label class="form-label" for="patient-phone">Phone number</label><input class="field" id="patient-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="03XX XXXXXXX" value="${escapeHtml(p.phone)}" required></div><div class="field-group"><label class="form-label" for="patient-age">Age</label><input class="field" id="patient-age" name="age" type="number" min="0" max="120" placeholder="Age in years" value="${escapeHtml(p.age)}" required></div><div class="field-group"><label class="form-label" for="patient-gender">Gender</label><select class="field" id="patient-gender" name="gender" required><option value="">Choose</option>${['Female', 'Male', 'Prefer not to say'].map((v) => `<option ${p.gender === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div></div><div class="field-group"><label class="form-label" for="patient-reason">Reason for visit</label><textarea class="field" id="patient-reason" name="reason" rows="3" maxlength="220" placeholder="Briefly tell us what you need help with" style="height:auto;min-height:74px;padding:10px 11px;resize:vertical" required>${escapeHtml(p.reason)}</textarea></div><p class="form-footnote">Your request details will be sent to the hospital’s private Google booking sheet after the booking connection is activated.</p><div class="booking-error" aria-live="polite"></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-back>Back</button><button class="button button-primary" type="button" data-next>Review request <span>→</span></button></div>`;
 }
 function review() {
   const doctor = state.doctor;
   const time = doctor.booking === 'queue' ? 'Queue visit · Monday & Wednesday, 11:00 am–2:00 pm' : `${state.slotLabel || timeSlots(doctor, state.date).find((v) => v.value === state.slot)?.label || ''} · ${doctor.hours}`;
-  return `<div class="summary-card"><div class="summary-head"><img src="${doctor.image}" alt=""><div><b>${doctor.name}</b><small>Arbi Hospital Dinga · ${doctor.booking === 'queue' ? 'Queue appointment' : '10-minute appointment'}</small></div></div><div class="summary-fields"><div><small>DATE</small><b>${dateLabel(state.date, true)}</b></div><div><small>TIME / ARRANGEMENT</small><b>${escapeHtml(time)}</b></div><div><small>APPOINTMENT TYPE</small><b>${state.kind} booking request</b></div><div><small>PATIENT</small><b>${escapeHtml(state.person.name)}, ${escapeHtml(state.person.age)} years</b></div><div><small>PHONE</small><b>${escapeHtml(state.person.phone)}</b></div><div><small>GENDER</small><b>${escapeHtml(state.person.gender)}</b></div><div style="grid-column:1/-1"><small>REASON FOR VISIT</small><b>${escapeHtml(state.person.reason)}</b></div></div></div><p class="form-footnote">This is a front-end preview. Submitting does not reserve a real appointment or notify the hospital.</p><div class="booking-error" aria-live="polite"></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-back>Edit details</button><button class="button button-primary" type="button" data-submit>Submit demo request <span>→</span></button></div>`;
+  return `<div class="summary-card"><div class="summary-head"><img src="${doctor.image}" alt=""><div><b>${doctor.name}</b><small>Arbi Hospital Dinga · ${doctor.booking === 'queue' ? 'Queue appointment' : '10-minute appointment'}</small></div></div><div class="summary-fields"><div><small>DATE</small><b>${dateLabel(state.date, true)}</b></div><div><small>TIME / ARRANGEMENT</small><b>${escapeHtml(time)}</b></div><div><small>APPOINTMENT TYPE</small><b>${state.kind} booking request</b></div><div><small>PATIENT</small><b>${escapeHtml(state.person.name)}, ${escapeHtml(state.person.age)} years</b></div><div><small>PHONE</small><b>${escapeHtml(state.person.phone)}</b></div><div><small>GENDER</small><b>${escapeHtml(state.person.gender)}</b></div><div style="grid-column:1/-1"><small>REASON FOR VISIT</small><b>${escapeHtml(state.person.reason)}</b></div></div></div><p class="form-footnote">Sending this request shares the details above with Arbi Hospital Dinga. The hospital will contact you to confirm; this is not a confirmed appointment.</p><div class="booking-error" aria-live="polite"></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-back>Edit details</button><button class="button button-primary" type="button" data-submit>Send booking request <span>→</span></button></div>`;
 }
 function success() {
   const isQueue = state.doctor.booking === 'queue';
@@ -137,7 +141,26 @@ document.addEventListener('click', (event) => {
     state.person = { name: name.value.trim(), phone: phone.value.trim(), age: content.querySelector('#patient-age').value, gender: content.querySelector('#patient-gender').value, reason: content.querySelector('#patient-reason').value.trim() };
     state.step = 3; render(); return;
   }
-  if (event.target.closest('[data-submit]')) { state.step = 4; render(); return; }
+  if (event.target.closest('[data-submit]')) {
+    const error = content.querySelector('.booking-error');
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(BOOKING_ENDPOINT)) {
+      error.textContent = 'The hospital booking connection is not activated yet. No request has been sent.';
+      return;
+    }
+    const payload = {
+      doctorId: state.doctor.id, doctor: state.doctor.name, bookingMode: state.doctor.booking,
+      date: state.date, slot: state.doctor.booking === 'queue' ? '' : state.slot,
+      appointmentType: state.kind, name: state.person.name, phone: state.person.phone,
+      age: state.person.age, gender: state.person.gender, reason: state.person.reason, website: ''
+    };
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = BOOKING_ENDPOINT; form.target = '_self';
+    Object.entries(payload).forEach(([name, value]) => {
+      const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.appendChild(input);
+    });
+    document.body.appendChild(form); form.submit(); form.remove();
+    return;
+  }
   if (event.target.closest('[data-finish]')) { dialog.close(); return; }
 });
 document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
